@@ -3,13 +3,13 @@
 
 #include <netdb.h>
 
-#include "header.h"
+#include "common.h"
 
 class Connector : public Uncopyable
 {
 private:
 	bool isServer;
-	MessageReceiver* 	msgReceiver;
+    bool killListener;
 
 protected:
 	struct addrinfo*	addressInfoPtr; // Filled up by system call getaddrinfo
@@ -48,8 +48,6 @@ public:
 	 * Same socket can be used to send to different recipients.
 	 */
 	int send_message(const char* const recvr_hostname, const int recvr_port, uint8_t* const msg, const int len);
-
-	void setMsgReceiver(MessageReceiver* msgReceiver);
 
 	virtual ~Connector();
 };

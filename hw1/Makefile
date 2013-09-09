@@ -1,15 +1,15 @@
 CC = gcc
 TARGET = server client
 CFLAGS = -c -Wall
-LIBS = 
+LIBS = -lstdc++
 
 all:	$(TARGET)
 
 client: 
-	$(CC) -o $@ $@.c $^ $(LIBS)
+	$(CC) -o $@ $@.cpp $^ $(LIBS)
 
-server: 
-	$(CC) -o $@ $@.c $^ $(LIBS)
+server: connection.o 
+	$(CC) -o $@ $@.cpp $^ $(LIBS)
 
 %.o:	%.c %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@

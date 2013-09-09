@@ -5,17 +5,13 @@
 #include <arpa/inet.h>
 
 #include "connection.h"
-#include "MessageReceiver.h"
-
-extern bool destroy_thread;
 
 Connector::Connector(bool isServer) : isServer(isServer)
 {
+    killListener = false;
 	addressInfoPtr = NULL;
 	ai_node = NULL;
 	sockfd = BAD_SOCKFD;
-
-	msgReceiver = NULL;
 }
 
 /**
@@ -31,7 +27,7 @@ bool Connector::populateAddrInfo(char* const host, char* const portStr)
 	memset(&hints, 0, sizeof hints); // make sure the struct is empty
 	hints.ai_family = AF_INET; // Mention IP4 else data is not read properly!
 
-	hints.ai_socktype = SOCK_DGRAM; // UDP datagrams
+	hints.ai_socktype = SOCK_STREAM; // UDP datagrams
 
 	/**
 	 * By using the AI_PASSIVE flag, I'm telling the program to bind
@@ -188,10 +184,10 @@ int Connector::listen()
 //		printBytes(recv_data, bytes_read);
 
 		/* Send received data to Message Receiver Module */
-		msgReceiver->receive_msg(from_ipv4, port, recv_data, bytes_read);
+		// msgReceiver->receive_msg(from_ipv4, port, recv_data, bytes_read);
 		fflush(stdout);
 
-		if(destroy_thread)
+		if(killListener)
 		{
 			fprintf(stderr, "Connector:: Closing socket: %d/n", sockfd);
 			close(sockfd);
@@ -256,12 +252,6 @@ int Connector::send_message(const char* const recvr_hostname, const int recvr_po
 		perror("talker: sendto");
 	}
 	return SUCCESS;
-}
-
-void Connector::setMsgReceiver(MessageReceiver* msgReceiver)
-{
-	assert (this->msgReceiver == NULL);
-	this->msgReceiver = msgReceiver;
 }
 
 Connector::~Connector()
