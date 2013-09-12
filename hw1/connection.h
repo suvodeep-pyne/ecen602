@@ -37,7 +37,7 @@ public:
 	/**
 	 * Runs infinitely. Waits and receives each incoming message.
 	 */
-	int listen();
+	int startListener();
 	/**
 	 * Default send: send to server
 	 */
@@ -52,4 +52,5 @@ public:
 	virtual ~Connector();
 };
 
+#define BACKLOG 10
 #endif

@@ -6,6 +6,8 @@
 int main ()
 {
     Connector conn(true);
+    conn.setup("localhost", "5000");
+    conn.startListener();
 
     return 0;
 }

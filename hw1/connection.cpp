@@ -27,7 +27,7 @@ bool Connector::populateAddrInfo(char* const host, char* const portStr)
 	memset(&hints, 0, sizeof hints); // make sure the struct is empty
 	hints.ai_family = AF_INET; // Mention IP4 else data is not read properly!
 
-	hints.ai_socktype = SOCK_STREAM; // UDP datagrams
+	hints.ai_socktype = SOCK_STREAM; // TCP packets
 
 	/**
 	 * By using the AI_PASSIVE flag, I'm telling the program to bind
@@ -97,7 +97,16 @@ int Connector::setup(char* const host, char* const portStr)
 			}
 			else
 			{
-				break;
+                if(connect(sockfd, p->ai_addr, p->ai_addrlen) != -1)
+				{
+					break;
+				}
+				else
+				{
+					fprintf(stderr, "Connector:: Closing socket: %d/n", sockfd);
+					close(sockfd);
+					sockfd = BAD_SOCKFD;
+				}
 			}
 		}
 
@@ -143,13 +152,14 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int Connector::listen()
+int Connector::startListener()
 {
 	if (sockfd == BAD_SOCKFD)
 	{
 		return FAILURE;
 	}
 
+    int new_fd;
 	size_t bytes_read;
 	uint8_t	recv_data[MAX_MSG_SIZE];
 	const int FLAGS = 0;
@@ -158,20 +168,24 @@ int Connector::listen()
 
 	char from_ipv4[INET_ADDRSTRLEN];
 
-	printf("\nConnector:: Listening on port..\n");
+    if (listen(sockfd, BACKLOG) == -1) {
+        perror("listen");
+        exit(1);
+    }
+    printf("\nConnector:: Listening on port..\n");
 	fflush(stdout);
 
+    printf("\nConnector:: Waiting for connections..\n");
 	while (1)
 	{
 		fromlen = sizeof from_addr;
-		bytes_read = recvfrom(sockfd,
-				recv_data, MAX_MSG_SIZE, FLAGS,
-				(struct sockaddr *) &from_addr, &fromlen);
+		new_fd = accept(sockfd,	(struct sockaddr *) &from_addr, &fromlen);
 
-		if (bytes_read == -1)
+		if (new_fd == -1)
 		{
-			perror("recvfrom");
-			return FAILURE;
+			perror("accept");
+            sleep(1);
+			continue;
 		}
 
 		recv_data[bytes_read] = '\0';
@@ -180,11 +194,15 @@ int Connector::listen()
 				from_ipv4, sizeof from_ipv4);
 
 		int port = ntohs(((struct sockaddr_in *) &from_addr)->sin_port);
-//		printf("Connector:: Received msg from [%s : %d]\n", from_ipv4, port);
+    	printf("Connector:: Received msg from [%s : %d]\n", from_ipv4, port);
 //		printBytes(recv_data, bytes_read);
 
 		/* Send received data to Message Receiver Module */
 		// msgReceiver->receive_msg(from_ipv4, port, recv_data, bytes_read);
+        if (send(new_fd, "Hello, world!", 13, 0) == -1)
+            perror("send");
+        close(new_fd);
+
 		fflush(stdout);
 
 		if(killListener)
