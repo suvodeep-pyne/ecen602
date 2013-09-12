@@ -1,5 +1,6 @@
 server client
 *.swp
 *.o
+*.out
 
 tags
