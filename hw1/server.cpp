@@ -60,10 +60,20 @@ int addClient(int sockfd,
     return SUCCESS; 
 }
 
+char* getUserName(vector< ClientInfo* > & clients, int fd)
+{
+    for(int i = 0; i < clients.size(); i++)
+    {
+        if(fd == clients[i]->fd)
+            return clients[i]->username;
+    }
+    return NULL;
+}
 int read_msg(ClientInfo* pClientInfo, 
              vector< ClientInfo* > & clients, 
              uint8_t* recv_data, int bytes_read)
 {
+    int FLAGS = 0;
     SBCP_Message* pSbcpmsg = (SBCP_Message*) recv_data;
     SBCP_Attr *pAttr;
     assert (pSbcpmsg->vrsn == VERSION);
@@ -82,7 +92,20 @@ int read_msg(ClientInfo* pClientInfo,
             pAttr = (SBCP_Attr*) pSbcpmsg->payload; // adding bytes
             assert ( pAttr->type == MESSAGE);
             printf("Message: %s\n", pAttr->payload);
-        break;
+
+            SBCP_Message sbcpmsg;
+            int sbcpmsglen = SBCP_createFwdMsg(sbcpmsg, 
+                              getUserName(clients, pClientInfo->fd),
+                              pAttr->payload);
+            for(int i = 0; i < clients.size(); i++)
+            {
+                if(pClientInfo->fd != clients[i]->fd)
+                {
+                    if(send(clients[i]->fd, &sbcpmsg, sbcpmsglen, FLAGS) == -1)
+                        perror("send");
+                }
+            }
+         break;
     }
 }
 

@@ -27,7 +27,7 @@ struct SBCP_Message
     size_t type   : 7;
     size_t length : 16;
 
-    unsigned char payload[MAX_ATTRS_SIZE];
+    char payload[MAX_ATTRS_SIZE];
 };
 
 #define MAX_PAYLOAD 512
@@ -36,11 +36,14 @@ struct SBCP_Attr
 {
     size_t type   : 16;
     size_t length : 16;
-    unsigned char payload[MAX_PAYLOAD];
+    char payload[MAX_PAYLOAD];
 };
 
 size_t SBCP_createJoinMsg(SBCP_Message& sbcpmsg,
                           const char* username);
 size_t SBCP_createSendMsg(SBCP_Message& sbcpmsg,
                           const char* msg);
+size_t SBCP_createFwdMsg(SBCP_Message& sbcpmsg,
+                         const char* username,
+                         const char* msg);
 #endif
