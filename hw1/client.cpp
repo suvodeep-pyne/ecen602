@@ -55,9 +55,12 @@ int startClient(int sockfd)
         if(FD_ISSET(STDIN, &read_fds))
         {
             fgets(chatmsg, CHAT_TXT_LEN, stdin);
-            printf("Entered text: %s\n", chatmsg);
+            sbcpmsglen = SBCP_createSendMsg(sbcpmsg, chatmsg);
+            if(send(sockfd, &sbcpmsg, sbcpmsglen, FLAGS) == -1)
+            {
+                perror("send");
+            }
         }
-         
         if(FD_ISSET(sockfd, &read_fds))
         {
             printf("Message Received:\n");

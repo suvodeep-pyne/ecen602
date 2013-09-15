@@ -74,12 +74,14 @@ int read_msg(ClientInfo* pClientInfo,
             pAttr = (SBCP_Attr*) pSbcpmsg->payload; // adding bytes
             assert ( pAttr->type == USERNAME);
             memcpy(pClientInfo->username, pAttr->payload, pAttr->length);
-            printf("Username: %s", pClientInfo->username);
-                    
+            printf("Username: %s\n", pClientInfo->username);
         break;
+
         case SEND:
-        break;
-        case FWD :
+            printf("SEND request from %d ", pClientInfo->fd); 
+            pAttr = (SBCP_Attr*) pSbcpmsg->payload; // adding bytes
+            assert ( pAttr->type == MESSAGE);
+            printf("Message: %s\n", pAttr->payload);
         break;
     }
 }

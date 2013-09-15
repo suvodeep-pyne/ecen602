@@ -41,4 +41,6 @@ struct SBCP_Attr
 
 size_t SBCP_createJoinMsg(SBCP_Message& sbcpmsg,
                           const char* username);
+size_t SBCP_createSendMsg(SBCP_Message& sbcpmsg,
+                          const char* msg);
 #endif
