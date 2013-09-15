@@ -12,20 +12,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <pthread.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <arpa/inet.h>
 #include <iostream>
+#include <vector>
+#include <sys/select.h>
 using namespace std;
 
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 const int BAD_SOCKFD = -1;
 
+#define STDIN 0
+
 #define SUCCESS 0
 #define FAILURE 1
 
 #define MAX_MSG_SIZE 1024
+
+#define DEBUG
+
+#ifdef DEBUG
+#define DBG_printf(XX) printf(XX);
+#else
+#define DBG_printf(XX) ;
+#endif
 
 /* ---------------------------------------------------------------*/
 /* Class Declarations */

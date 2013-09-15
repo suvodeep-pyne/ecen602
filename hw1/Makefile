@@ -1,17 +1,18 @@
 CC = gcc
 TARGET = server client
-CFLAGS = -c -Wall
+CFLAGS = -g  
 LIBS = -lstdc++
+DEP = connection.o sbcp.o
 
 all:	$(TARGET)
 
-client: 
-	$(CC) -o $@ $@.cpp $^ $(LIBS)
+client: client.cpp $(DEP) 
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-server: connection.o 
-	$(CC) -o $@ $@.cpp $^ $(LIBS)
+server: server.cpp $(DEP) 
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-%.o:	%.c %.cpp
+%.o:	%.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:

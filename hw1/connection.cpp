@@ -14,6 +14,10 @@ Connector::Connector(bool isServer) : isServer(isServer)
 	sockfd = BAD_SOCKFD;
 }
 
+int Connector::getSockfd()
+{
+    return sockfd;
+}
 /**
  * Populate addressInfoPtr
  */
@@ -73,6 +77,7 @@ bool Connector::bindToPort(struct addrinfo* const addressInfoPtr)
 
 int Connector::setup(char* const host, char* const portStr)
 {
+    int yes = 1;
 	if(not populateAddrInfo(host, portStr))
 		return 2;
 
@@ -84,6 +89,8 @@ int Connector::setup(char* const host, char* const portStr)
 		{
 			if(isServer)
 			{
+                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
 				if(bindToPort(p))
 				{
 					break;
@@ -118,6 +125,23 @@ int Connector::setup(char* const host, char* const portStr)
 		return 2;
 	}
 	ai_node = p;
+
+    /*
+    if(!isServer)
+    {
+        int numbytes;
+        char buf[MAX_MSG_SIZE];
+        if (send(sockfd, "Hello, world from client!", 23, 0) == -1)
+            perror("send");
+        if ((numbytes = recv(sockfd, buf, MAX_MSG_SIZE -1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+
+        printf("client: received '%s'\n",buf);
+    }
+    */
 	return 0;
 }
 
@@ -152,72 +176,6 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int Connector::startListener()
-{
-	if (sockfd == BAD_SOCKFD)
-	{
-		return FAILURE;
-	}
-
-    int new_fd;
-	size_t bytes_read;
-	uint8_t	recv_data[MAX_MSG_SIZE];
-	const int FLAGS = 0;
-	struct sockaddr_storage from_addr;
-	socklen_t fromlen;
-
-	char from_ipv4[INET_ADDRSTRLEN];
-
-    if (listen(sockfd, BACKLOG) == -1) {
-        perror("listen");
-        exit(1);
-    }
-    printf("\nConnector:: Listening on port..\n");
-	fflush(stdout);
-
-    printf("\nConnector:: Waiting for connections..\n");
-	while (1)
-	{
-		fromlen = sizeof from_addr;
-		new_fd = accept(sockfd,	(struct sockaddr *) &from_addr, &fromlen);
-
-		if (new_fd == -1)
-		{
-			perror("accept");
-            sleep(1);
-			continue;
-		}
-
-		recv_data[bytes_read] = '\0';
-		inet_ntop(AF_INET,
-				get_in_addr((struct sockaddr *)&from_addr),
-				from_ipv4, sizeof from_ipv4);
-
-		int port = ntohs(((struct sockaddr_in *) &from_addr)->sin_port);
-    	printf("Connector:: Received msg from [%s : %d]\n", from_ipv4, port);
-//		printBytes(recv_data, bytes_read);
-
-		/* Send received data to Message Receiver Module */
-		// msgReceiver->receive_msg(from_ipv4, port, recv_data, bytes_read);
-        if (send(new_fd, "Hello, world!", 13, 0) == -1)
-            perror("send");
-        close(new_fd);
-
-		fflush(stdout);
-
-		if(killListener)
-		{
-			fprintf(stderr, "Connector:: Closing socket: %d/n", sockfd);
-			close(sockfd);
-			sockfd = BAD_SOCKFD;
-			int temp = SUCCESS;
-			pthread_exit(&temp);
-		}
-		sleep(0);
-	}
-	return 0;
-}
-
 /**
  * Default send: send to server
  */
@@ -227,12 +185,11 @@ int Connector::send_message(uint8_t* const msg, const int len)
 	{
 		return FAILURE;
 	}
-	// assert (!isServer);
+	assert (!isServer);
 
-	if (sendto(sockfd, msg, len, 0,
-			ai_node->ai_addr, ai_node->ai_addrlen) == -1)
+	if (send(sockfd, msg, len, 0) == -1)
 	{
-		perror("talker: sendto");
+		perror("talker: send");
 	}
 	return SUCCESS;
 }

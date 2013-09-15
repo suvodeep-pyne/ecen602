@@ -20,6 +20,7 @@ public:
 	/** Public Constructor */
 	Connector(bool isServer);
 
+    int getSockfd();
 	bool getIsServer(){return isServer;}
 
 	/**
@@ -35,10 +36,6 @@ public:
 	int setup(char* const host, char* const portStr);
 
 	/**
-	 * Runs infinitely. Waits and receives each incoming message.
-	 */
-	int startListener();
-	/**
 	 * Default send: send to server
 	 */
 	int send_message(uint8_t* const msg, const int len);
@@ -52,5 +49,7 @@ public:
 	virtual ~Connector();
 };
 
-#define BACKLOG 10
+void *get_in_addr(struct sockaddr *sa);
+
+#define BACKLOG 5
 #endif
