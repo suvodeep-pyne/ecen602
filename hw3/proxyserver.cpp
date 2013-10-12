@@ -66,11 +66,13 @@ int closeConnection(Client* client, fd_set& master)
 	{
 		close(client->csock);
 		FD_CLR(client->csock, &master); // remove from master set
+		printf("Server: Connection closed with client on socket %d\n", client->csock); 
 	}
 	if(client->osock != BAD_SOCKFD)
 	{
 		close(client->osock);
 		FD_CLR(client->osock, &master); // remove from master set
+		printf("Server: Connection closed with host on socket %d\n", client->osock); 
 	}
 	delete client;
 	return 0;
@@ -146,8 +148,7 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 	if ((nbytes = recv(fd, buf, sizeof buf, 0)) <= 0)
 	{
 		// got error or connection closed by client
-		if (nbytes == 0) { printf("Server: Connection closed on socket %d\n", fd);} 
-		else { perror("recv"); }
+		if (nbytes) perror("recv");
 		vector<Client*>::iterator ii = getClient(fd);
 		closeConnection(*ii, master);
 		clients.erase(ii);
@@ -169,7 +170,7 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 
 				client->osock = createAndConnect(url);
 				FD_SET(client->osock, &master); // add to master set
-				if (client->osock  > fdmax) {    // keep track of the max
+				if (client->osock > fdmax) {    // keep track of the max
 					fdmax = client->osock;
 				}
 			}

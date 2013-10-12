@@ -10,13 +10,28 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int createHttpGetPacket(const char* const url, char* pkt)
+int createHttpGetPacket(char* url, char* pkt)
 {
 	/*
 	 * sprintf returns the number of characters written excluding the
 	 * NULL character. Adding 1 to include that.
 	 */
-	return 1 + sprintf(pkt, "GET / HTTP/1.0\r\nHost: %s\r\nConnection: close\r\n\r\n", url);
+
+	char* t = strstr(url, "http://");
+	if (t) url += strlen("http://");
+
+	char* end = strchr(url, '/');
+
+	if(end)
+	{
+		char host[MAXURLLENGTH];
+		strncpy(host, url, end - url);
+		host[end - url] = '\0';
+
+		printf("packet:GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", end, host);
+		return 1 + sprintf(pkt, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", end, host);
+	}
+	return 1 + sprintf(pkt, "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", url);
 	// return 1 + sprintf(pkt, "GET / HTTP/1.1\r\nHost: %s\r\n\r\n", url);
 }
 
