@@ -1,4 +1,9 @@
+#include <algorithm>
+
 #include "lru.h"
+
+
+using namespace std;
 
 bool LRU::add(string url, Cache* cache)
 {
@@ -33,7 +38,9 @@ Cache* LRU::get(string url)
 		return NULL;
 
 	// move the element in the list to the front
-	urllist.splice(urllist.begin(), urllist, find(urllist.begin(), urllist.end(), url));
+	urllist.splice(urllist.begin(), 
+				   urllist, 
+				   find(urllist.begin(), urllist.end(), url));
 	
 	return urlmap[url];
 }

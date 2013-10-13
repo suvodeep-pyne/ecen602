@@ -9,7 +9,7 @@ all:    $(TARGET)
 httpclient: httpclient.cpp $(DEP) 
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-proxyserver: proxyserver.cpp $(DEP) 
+proxyserver: lru.o proxyserver.cpp $(DEP) 
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 %.o:    %.cpp

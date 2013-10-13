@@ -7,7 +7,9 @@
 
 #include "proxyserver.h"
 
-#include MAX_ELEMENTS 10
+#define MAX_ELEMENTS 10
+
+using namespace std;
 
 class Cache
 {
