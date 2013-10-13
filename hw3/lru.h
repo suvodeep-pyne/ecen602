@@ -21,18 +21,11 @@ private:
 	list<string> urllist;
 	map<string, Cache*> urlmap;
 
+	bool trimIfReqd();
+
 public:
-	bool add(string url, Cache* cache)
-	{
-		urllist.push_front(url);
-		urlmap[url] = cache;
-
-		if(urllist.size() > MAX_ELEMENTS)
-		{
-
-		}
-
-	}
+	bool   add(string url, Cache* cache);
+	Cache* get(string url);
 };
 
 #endif
