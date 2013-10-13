@@ -1,3 +1,6 @@
+#ifndef _PROXYSERVER_H_
+#define _PROXYSERVER_H_
+
 #include "common.h"
 
 typedef struct _Client
@@ -10,3 +13,5 @@ typedef struct _Client
 } Client;
 
 void *get_in_addr(struct sockaddr *sa);
+
+#endif
