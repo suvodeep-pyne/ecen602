@@ -189,9 +189,9 @@ time_t parseTime(const char* header, char* buf)
 		expires += strlen(header);
 		while(*expires == ' ') ++expires;
 		while(*(end - 1) == ' ') --end;
+		strncpy(expireTime, expires, end - expires);
+		expireTime[end - expires] = '\0';
 	}
-	strncpy(expireTime, expires, end - expires);
-	expireTime[end - expires] = '\0';
 
 	// parse date and time
 	struct tm expireTm;
@@ -254,17 +254,18 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 			// Attempt to fetch from cache. Else forward to host.
 
 			getPath(buf, client->path);
+			cout << endl;
 			cout << "Fetching url: " << client->path << endl;
-		
+			lru.print();	
 
 			bool fetch = true;
 			time_t now = getCurrentTime();
 			Cache *cache = lru.get(client->path);
 			if (cache)
 			{
-				cout << "Now: " << now << endl;
-				cout << "Expires: " << cache->expires << endl;
-				cout << "Difference: " << difftime(cache->expires, now) << " sec" << endl;
+				// cout << "Now: " << now << endl;
+				// cout << "Expires: " << cache->expires << endl;
+				// cout << "Difference: " << difftime(cache->expires, now) << " sec" << endl;
 				if (now < cache->expires)
 				{
 					cout << "Cache hit on " << client->path << endl;
@@ -288,7 +289,7 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 					if(true)
 					{
 						// Delete cache
-					cout << "Deleting Cache for " << client->path << endl;
+						cout << "Deleting Cache for " << client->path << endl;
 						lru.removeEntry(client->path);
 					}
 				}

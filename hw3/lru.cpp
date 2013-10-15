@@ -57,6 +57,19 @@ Cache* LRU::get(string url)
 	return urlmap[url];
 }
 
+void LRU::print()
+{
+	cout << "LRU: ";
+	for (list<string>::reverse_iterator ii = urllist.rbegin();
+		ii != urllist.rend();)
+	{
+		cout << *ii;
+		++ii;
+		if (ii != urllist.rend()) cout << " >> ";
+		else break;
+	}
+	cout << endl;
+}
 
 void Cache::addChunk(char* buf, int nbytes)
 {

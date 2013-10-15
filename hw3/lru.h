@@ -44,6 +44,7 @@ public:
 	bool   add(Cache* cache);
 	Cache* get(string url);
 	bool removeEntry(string url);
+	void print();
 };
 
 #endif
