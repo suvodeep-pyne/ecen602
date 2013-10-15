@@ -20,6 +20,7 @@ bool LRU::trimIfReqd()
 
 	// Fetch the most stale object (url)
 	string url = urllist.back();
+	cout << "Server: Cache overflow. Erasing url: " << url << endl;
 
 	// Erase cache data
 	assert (urlmap[url]);
