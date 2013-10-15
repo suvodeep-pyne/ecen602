@@ -6,6 +6,17 @@ using namespace std;
 LRU lru;
 vector <Client*> clients;
 
+time_t getCurrentTime()
+{
+	time_t rawtime;
+	struct tm * ptm;
+
+	time ( &rawtime );
+
+	ptm = gmtime ( &rawtime );
+
+	return mktime(ptm);
+}
 vector<Client*>::iterator getClient(int sock)
 {
 	for(vector<Client*>::iterator ii = clients.begin();
@@ -165,14 +176,54 @@ int createAndConnect(char* url)
 
 	return sockfd;
 }
+
+time_t parseTime(const char* header, char* buf)
+{
+	char expireTime[255] = {0};
+
+	char* expires = strstr(buf, header);
+	char *end;
+	if(expires)
+	{
+		end = strstr(expires, "\r\n");
+		expires += strlen(header);
+		while(*expires == ' ') ++expires;
+		while(*(end - 1) == ' ') --end;
+	}
+	strncpy(expireTime, expires, end - expires);
+	expireTime[end - expires] = '\0';
+
+	// parse date and time
+	struct tm expireTm;
+	memset(&expireTm, 0, sizeof(struct tm));
+	// Tue, 22 Oct 2013 02:53:50 GMT
+	if(strptime(expireTime, "%A, %d %B %Y %H:%M:%S %Z", &expireTm))
+	{
+		return mktime(&expireTm);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 void updateCache(Client* client, char* buf, int nbytes)
 {
 	Cache* cache = lru.get(client->path);
 
 	if (!cache)
 	{
-		cout << "Caching " << client->path << endl;
 		cache = new Cache(client->path);
+		cout << "Caching " << client->path << endl;
+		cache->expires = parseTime("Expires:", buf);
+		cache->lastModified = parseTime("Last-Modified:", buf);
+
+		// Print out the times to check whether parsed correctly
+		/*
+		cout << "Expire Time: " << cache->expires << endl;
+		cout << "Last Modified Time: " << cache->lastModified << endl;
+		cout << "Current Time: " << time(NULL) << endl;
+		*/
 		lru.add(cache);
 	}
 
@@ -204,25 +255,46 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 
 			getPath(buf, client->path);
 			cout << "Fetching url: " << client->path << endl;
-			
+		
+
+			bool fetch = true;
+			time_t now = getCurrentTime();
 			Cache *cache = lru.get(client->path);
 			if (cache)
 			{
-				cout << "Cache hit on " << client->path << endl;
-				for ( vector < Chunk*>:: iterator ii = cache->chunks.begin(); ii != cache->chunks.end(); ii++)
+				cout << "Now: " << now << endl;
+				cout << "Expires: " << cache->expires << endl;
+				cout << "Difference: " << difftime(cache->expires, now) << " sec" << endl;
+				if (now < cache->expires)
 				{
-					if (send(client->csock, (*ii)->data, (*ii)->size, 0) == -1)
+					cout << "Cache hit on " << client->path << endl;
+					for ( vector < Chunk*>:: iterator ii = cache->chunks.begin(); ii != cache->chunks.end(); ii++)
 					{
-						perror("send");
+						if (send(client->csock, (*ii)->data, (*ii)->size, 0) == -1)
+						{
+							perror("send");
+						}
+					}
+
+					cout << "Server: Sent from Cache: " << client->path << endl;
+					vector<Client*>::iterator ii = getClient(fd);
+					closeConnection(*ii, master);
+					clients.erase(ii);
+					fetch = false;
+				}
+				else
+				{
+					cout << "Cache Expired for " << client->path << endl;
+					if(true)
+					{
+						// Delete cache
+					cout << "Deleting Cache for " << client->path << endl;
+						lru.removeEntry(client->path);
 					}
 				}
-
-				cout << "Server: Sent from Cache: " << client->path << endl;
-				vector<Client*>::iterator ii = getClient(fd);
-				closeConnection(*ii, master);
-				clients.erase(ii);
 			}
-			else
+
+			if(fetch)
 			{
 				cout << "Cache miss on fetching " << client->path << " Forwarding request to host" << endl;
 				if(client->osock == BAD_SOCKFD)

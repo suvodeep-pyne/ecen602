@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
 	printf("client: Response from hostname:\n");
 
 	int count = 0;
+	size_t totalBytes = 0;
 	do
 	{
 		if ((nbytes = recv(sockfd, buf, MAXRESPONSELENGTH - 1, 0)) == -1) {
@@ -111,11 +112,13 @@ int main(int argc, char *argv[])
 
 		buf[nbytes] = '\0';
 		count++;
+		totalBytes += nbytes;
 		printf("%s", buf);
 	} while(nbytes && strcmp(buf + nbytes - 4, "\r\n\r\n"));
 
 	close(sockfd);
 	printf("\nclient: Page Received in %d chunk(s).\n", count);
+	printf("\nclient: Total Number of Bytes Received: %lu\n", totalBytes);
 
 	return 0;
 }

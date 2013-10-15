@@ -15,8 +15,6 @@ typedef struct _Chunk
 {
 	char data[MAXRESPONSELENGTH];
 	int size;
-
-
 } Chunk;
 
 class Cache
@@ -26,6 +24,7 @@ private:
 public:
 	string url;
 	vector< Chunk* > chunks;
+	time_t lastModified, expires;
 
 	Cache(string url) : url(url) {}
 	void addChunk(char* buf, int nbytes);
@@ -44,6 +43,7 @@ private:
 public:
 	bool   add(Cache* cache);
 	Cache* get(string url);
+	bool removeEntry(string url);
 };
 
 #endif

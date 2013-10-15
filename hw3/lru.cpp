@@ -33,6 +33,17 @@ bool LRU::trimIfReqd()
 	return true;
 }
 
+bool LRU::removeEntry(string url)
+{
+	delete urlmap[url];
+
+	// Erase references from the map and list
+	urlmap.erase(url);
+	urllist.erase(find(urllist.begin(), urllist.end(), url));
+
+	return true;
+}
+
 Cache* LRU::get(string url)
 {
 	if (urlmap.find(url) == urlmap.end())
