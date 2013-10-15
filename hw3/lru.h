@@ -11,10 +11,26 @@
 
 using namespace std;
 
+typedef struct _Chunk
+{
+	char data[MAXRESPONSELENGTH];
+	int size;
+
+
+} Chunk;
+
 class Cache
 {
-	string url;
+private:
 
+public:
+	string url;
+	vector< Chunk* > chunks;
+
+	Cache(string url) : url(url) {}
+	void addChunk(char* buf, int nbytes);
+
+	~Cache();
 };
 
 class LRU
@@ -26,7 +42,7 @@ private:
 	bool trimIfReqd();
 
 public:
-	bool   add(string url, Cache* cache);
+	bool   add(Cache* cache);
 	Cache* get(string url);
 };
 

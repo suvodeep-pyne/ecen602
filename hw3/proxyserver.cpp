@@ -1,7 +1,9 @@
 #include "proxyserver.h"
+#include "lru.h"
 
 using namespace std;
 
+LRU lru;
 vector <Client*> clients;
 
 vector<Client*>::iterator getClient(int sock)
@@ -91,6 +93,32 @@ int getHost(char* request, char* url)
 	return end - host + 1;
 }
 
+int getPath(const char* request, string& path)
+{
+	char req[MAXREQLENGTH];
+	strcpy(req, request);
+
+	char url[MAXURLLENGTH];
+	getHost(req, url);
+
+	path.append(url);
+
+	const char *s = " \r\n";
+	char *token;
+
+	/* get the first token */
+	token = strtok(req, s);
+
+	/* walk through other tokens */
+	if( token != NULL ) 
+	{
+		token = strtok(NULL, s);
+		path.append(token);
+	}
+
+	return 0;
+}
+
 int createAndConnect(char* url)
 {
 	int sockfd;  
@@ -131,11 +159,24 @@ int createAndConnect(char* url)
 
 	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
 			hostname, sizeof hostname);
-	printf("client: connecting to %s\n", hostname);
+	printf("server: connecting to host: %s\n", hostname);
 
 	freeaddrinfo(servinfo); // all done with this structure
 
 	return sockfd;
+}
+void updateCache(Client* client, char* buf, int nbytes)
+{
+	Cache* cache = lru.get(client->path);
+
+	if (!cache)
+	{
+		cout << "Caching " << client->path << endl;
+		cache = new Cache(client->path);
+		lru.add(cache);
+	}
+
+	cache->addChunk(buf, nbytes);
 }
 
 int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
@@ -160,30 +201,56 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 		{
 			// Received a message from client. 
 			// Attempt to fetch from cache. Else forward to host.
-			if(client->osock == BAD_SOCKFD)
-			{
-				assert(strstr(buf, HTTP_GET));
-				
-				char url[MAXURLLENGTH];
-				getHost(buf, url);
-				printf("Fetching url: %s\n", url);
 
-				client->osock = createAndConnect(url);
-				FD_SET(client->osock, &master); // add to master set
-				if (client->osock > fdmax) {    // keep track of the max
-					fdmax = client->osock;
+			getPath(buf, client->path);
+			cout << "Fetching url: " << client->path << endl;
+			
+			Cache *cache = lru.get(client->path);
+			if (cache)
+			{
+				cout << "Cache hit on " << client->path << endl;
+				for ( vector < Chunk*>:: iterator ii = cache->chunks.begin(); ii != cache->chunks.end(); ii++)
+				{
+					if (send(client->csock, (*ii)->data, (*ii)->size, 0) == -1)
+					{
+						perror("send");
+					}
 				}
-			}
 
-			if (send(client->osock, buf, nbytes, 0) == -1)
+				cout << "Server: Sent from Cache: " << client->path << endl;
+				vector<Client*>::iterator ii = getClient(fd);
+				closeConnection(*ii, master);
+				clients.erase(ii);
+			}
+			else
 			{
-				perror("send");
+				cout << "Cache miss on fetching " << client->path << " Forwarding request to host" << endl;
+				if(client->osock == BAD_SOCKFD)
+				{
+					assert(strstr(buf, HTTP_GET));
+
+					char url[MAXURLLENGTH];
+					getHost(buf, url);
+
+					client->osock = createAndConnect(url);
+					FD_SET(client->osock, &master); // add to master set
+					if (client->osock > fdmax) {    // keep track of the max
+						fdmax = client->osock;
+					}
+				}
+
+				if (send(client->osock, buf, nbytes, 0) == -1)
+				{
+					perror("send");
+				}
 			}
 		}
 		else if (fd == client->osock)
 		{
 			// Received a message from the host. 
 			// Update Cache. Forward to client.
+			updateCache(client, buf, nbytes);
+
 			if (send(client->csock, buf, nbytes, 0) == -1)
 			{
 				perror("send");

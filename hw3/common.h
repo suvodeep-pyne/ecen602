@@ -29,4 +29,6 @@
 #define HTTP_HOST_HEADER "Host: "
 #define HTTP_PORT 				"80"
 
+using namespace std;
+
 #endif

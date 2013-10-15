@@ -5,10 +5,10 @@
 
 using namespace std;
 
-bool LRU::add(string url, Cache* cache)
+bool LRU::add(Cache* cache)
 {
-	urllist.push_front(url);
-	urlmap[url] = cache;
+	urllist.push_front(cache->url);
+	urlmap[cache->url] = cache;
 
 	trimIfReqd();
 }
@@ -43,4 +43,23 @@ Cache* LRU::get(string url)
 				   find(urllist.begin(), urllist.end(), url));
 	
 	return urlmap[url];
+}
+
+
+void Cache::addChunk(char* buf, int nbytes)
+{
+	Chunk *chunk = new Chunk;
+	memcpy(chunk->data, buf, nbytes);
+	chunk->size = nbytes;
+
+	chunks.push_back(chunk);
+}
+
+Cache::~Cache()
+{
+	for (vector<Chunk*>::iterator ii = chunks.begin();
+			ii != chunks.end(); ii++)
+	{
+		delete *ii;
+	}
 }

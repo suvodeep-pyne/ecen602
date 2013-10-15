@@ -10,6 +10,7 @@ typedef struct _Client
 	 * osock: Socket through which it interacts with hosts
 	 */
 	int csock, osock;
+	string path;
 } Client;
 
 void *get_in_addr(struct sockaddr *sa);
