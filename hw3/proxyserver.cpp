@@ -17,6 +17,7 @@ time_t getCurrentTime()
 
 	return mktime(ptm);
 }
+
 vector<Client*>::iterator getClient(int sock)
 {
 	for(vector<Client*>::iterator ii = clients.begin();
@@ -177,36 +178,6 @@ int createAndConnect(char* url)
 	return sockfd;
 }
 
-time_t parseTime(const char* header, char* buf)
-{
-	char expireTime[255] = {0};
-
-	char* expires = strstr(buf, header);
-	char *end;
-	if(expires)
-	{
-		end = strstr(expires, "\r\n");
-		expires += strlen(header);
-		while(*expires == ' ') ++expires;
-		while(*(end - 1) == ' ') --end;
-		strncpy(expireTime, expires, end - expires);
-		expireTime[end - expires] = '\0';
-	}
-
-	// parse date and time
-	struct tm expireTm;
-	memset(&expireTm, 0, sizeof(struct tm));
-	// Tue, 22 Oct 2013 02:53:50 GMT
-	if(strptime(expireTime, "%A, %d %B %Y %H:%M:%S %Z", &expireTm))
-	{
-		return mktime(&expireTm);
-	}
-	else
-	{
-		return 0;
-	}
-}
-
 void updateCache(Client* client, char* buf, int nbytes)
 {
 	Cache* cache = lru.get(client->path);
@@ -215,15 +186,8 @@ void updateCache(Client* client, char* buf, int nbytes)
 	{
 		cache = new Cache(client->path);
 		cout << "Caching " << client->path << endl;
-		cache->expires = parseTime("Expires:", buf);
-		cache->lastModified = parseTime("Last-Modified:", buf);
+		cache->extractInfo(buf, nbytes);
 
-		// Print out the times to check whether parsed correctly
-		/*
-		cout << "Expire Time: " << cache->expires << endl;
-		cout << "Last Modified Time: " << cache->lastModified << endl;
-		cout << "Current Time: " << time(NULL) << endl;
-		*/
 		lru.add(cache);
 	}
 

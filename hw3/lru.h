@@ -8,6 +8,8 @@
 #include "proxyserver.h"
 
 #define MAX_ELEMENTS 10
+#define MAX_ETAG_LENGTH 32
+#define MAX_EXPIRES_LENGTH 255
 
 using namespace std;
 
@@ -23,11 +25,15 @@ private:
 
 public:
 	string url;
+
 	vector< Chunk* > chunks;
+	char expiresStr[MAX_EXPIRES_LENGTH];
 	time_t lastModified, expires;
+	char etag[MAX_ETAG_LENGTH];
 
 	Cache(string url) : url(url) {}
 	void addChunk(char* buf, int nbytes);
+	void extractInfo(char* buf, const int nbytes);
 
 	~Cache();
 };
