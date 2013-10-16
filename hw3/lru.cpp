@@ -19,18 +19,15 @@ bool parseHeader(const char* header, char* buf, char* output)
 	return true;
 }
 
-
-
 bool parseEtag(char* buf, char* output)
 {
 	memset(output, 0, MAX_ETAG_LENGTH);
 
-	if(!parseHeader("ETag:", buf, output))
+	if(!parseHeader(HTTP_HEADER_ETAG, buf, output))
 		return false;
 	
 	return true;
 }
-
 
 bool LRU::add(Cache* cache)
 {
@@ -133,8 +130,9 @@ void Cache::extractInfo(char* buf, const int nbytes)
 
 	// Print out the times to check whether parsed correctly
 	cout << "Expire Time: " << expiresStr << " time_t: " << expires << endl;
-	cout << "Last Modified Time: " << lastModified << endl;
-	cout << "Current Time: " << time(NULL) << endl;
+	cout << "Etag: " << etag << endl;
+	// cout << "Last Modified Time: " << lastModified << endl;
+	// cout << "Current Time: " << time(NULL) << endl;
 
 }
 

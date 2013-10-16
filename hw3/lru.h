@@ -8,8 +8,7 @@
 #include "proxyserver.h"
 
 #define MAX_ELEMENTS 10
-#define MAX_ETAG_LENGTH 32
-#define MAX_EXPIRES_LENGTH 255
+
 
 using namespace std;
 
