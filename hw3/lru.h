@@ -29,6 +29,7 @@ public:
 	char expiresStr[MAX_EXPIRES_LENGTH];
 	time_t lastModified, expires;
 	char etag[MAX_ETAG_LENGTH];
+	bool isCondGet;
 
 	Cache(string url) : url(url) {}
 	void addChunk(char* buf, int nbytes);

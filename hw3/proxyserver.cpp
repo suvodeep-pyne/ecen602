@@ -185,6 +185,7 @@ void updateCache(Client* client, char* buf, int nbytes)
 	if (!cache)
 	{
 		cache = new Cache(client->path);
+		cache->isCondGet = false;
 		cout << "Caching " << client->path << endl;
 		cache->extractInfo(buf, nbytes);
 
@@ -275,7 +276,10 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 						lru.removeEntry(client->path);
 					}
 					else
+					{
 						fetch = true;
+						cache->isCondGet = true;
+					}
 				}
 			}
 
