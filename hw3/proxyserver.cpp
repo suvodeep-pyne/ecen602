@@ -115,7 +115,7 @@ int getPath(const char* request, string& path)
 
 	path.append(url);
 
-	const char *s = " \r\n";
+	const char *s = " \r\n"; // Any of the matching characters 
 	char *token;
 
 	/* get the first token */
@@ -194,6 +194,20 @@ void updateCache(Client* client, char* buf, int nbytes)
 	cache->addChunk(buf, nbytes);
 }
 
+bool createHttpConditionalGetPacket(Cache* cache, char* buf)
+{
+	char* end = strstr(buf, "\r\n\r\n");
+
+	if (!end || !cache->expires || !strlen(cache->etag)) return false;
+	end += 2; // Move pointer to end of first\r\n
+
+	sprintf(end, "%s%s\r\n%s%s\r\n\r\n", 
+			HTTP_HEADER_IF_MODIFIED_SINCE, cache->expiresStr,
+			HTTP_HEADER_IF_NONE_MATCH, cache->etag);
+	
+	// cout << "Conditional GET:" << buf << "<<END-OF-PACKET>>" << endl;
+}
+
 int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 {
 	assert (fd != BAD_SOCKFD);
@@ -222,7 +236,7 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 			cout << "Fetching url: " << client->path << endl;
 			lru.print();	
 
-			bool fetch = true;
+			bool fetch = true, isCondGet = false;
 			time_t now = getCurrentTime();
 			Cache *cache = lru.get(client->path);
 			if (cache)
@@ -250,18 +264,29 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 				else
 				{
 					cout << "Cache Expired for " << client->path << endl;
-					if(true)
+
+					// Send a conditional GET
+					isCondGet = createHttpConditionalGetPacket(cache, buf);
+
+					if(!isCondGet)
 					{
 						// Delete cache
 						cout << "Deleting Cache for " << client->path << endl;
 						lru.removeEntry(client->path);
 					}
+					else
+						fetch = true;
 				}
 			}
 
 			if(fetch)
 			{
-				cout << "Cache miss on fetching " << client->path << " Forwarding request to host" << endl;
+				if (!isCondGet)
+					cout << "Cache miss on fetching " << client->path 
+						 << " Forwarding request to host" << endl;
+				else
+					cout << "Cache Expired for " << client->path 
+						 << " Sending Conditional GET" << endl;
 				if(client->osock == BAD_SOCKFD)
 				{
 					assert(strstr(buf, HTTP_GET));

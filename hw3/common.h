@@ -32,9 +32,9 @@
 #define MAX_ETAG_LENGTH 		32
 #define MAX_EXPIRES_LENGTH		255
 
-#define HTTP_HEADER_ETAG 		"Etag:"
-#define HTTP_HEADER_IF_MODIFIED_SINCE "If-Modified-Since:"
-#define HTTP_HEADER_IF_NONE_MATCH "If-None-Match:"
+#define HTTP_HEADER_ETAG 		"Etag: "
+#define HTTP_HEADER_IF_MODIFIED_SINCE "If-Modified-Since: "
+#define HTTP_HEADER_IF_NONE_MATCH "If-None-Match: "
 
 using namespace std;
 
