@@ -335,7 +335,24 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 			// Update Cache. Forward to client.
 			updateCache(client, buf, nbytes);
 
-			if (send(client->csock, buf, nbytes, 0) == -1)
+			Cache *cache = lru.get(client->path);
+			if(cache && (strstr(buf, HTTP_HEADER_304_1_0) ||
+						 strstr(buf, HTTP_HEADER_304_1_1)))
+			{
+				for ( vector < Chunk*>:: iterator ii = cache->chunks.begin(); ii != cache->chunks.end(); ii++)
+				{
+					if (send(client->csock, (*ii)->data, (*ii)->size, 0) == -1)
+					{
+						perror("send");
+					}
+				}
+
+				cout << "Server: Page not modified. Sent from Cache: " << client->path << endl;
+				vector<Client*>::iterator ii = getClient(fd);
+				closeConnection(*ii, master);
+				clients.erase(ii);
+			}
+			else if (send(client->csock, buf, nbytes, 0) == -1)
 			{
 				perror("send");
 			}
