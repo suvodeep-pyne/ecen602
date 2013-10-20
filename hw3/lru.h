@@ -31,10 +31,11 @@ public:
 	char etag[MAX_ETAG_LENGTH];
 	bool isCondGet;
 
-	Cache(string url) : url(url) {}
+	Cache(string url);
 	void addChunk(char* buf, int nbytes);
 	void extractInfo(char* buf, const int nbytes);
 
+	void eraseChunks();
 	~Cache();
 };
 

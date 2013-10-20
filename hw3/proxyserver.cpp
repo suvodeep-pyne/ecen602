@@ -182,31 +182,49 @@ void updateCache(Client* client, char* buf, int nbytes)
 {
 	Cache* cache = lru.get(client->path);
 
-	if (!cache)
+	if (!cache && (strstr(buf, HTTP_HEADER_200_1_0) ||
+				   strstr(buf, HTTP_HEADER_200_1_1)))
 	{
 		cache = new Cache(client->path);
-		cache->isCondGet = false;
 		cout << "Caching " << client->path << endl;
 		cache->extractInfo(buf, nbytes);
 
 		lru.add(cache);
 	}
-
+	// Check if this is a conditional GET return packet
+	else if(cache->isCondGet)
+	{
+		// Extract Info only when the message contains the HTTP header
+		if(strstr(buf, HTTP_HEADER_304_1_0) ||
+		   strstr(buf, HTTP_HEADER_304_1_1))
+		{
+			cache->extractInfo(buf, nbytes);
+		}
+		else if(strstr(buf, HTTP_HEADER_200_1_0) ||
+				strstr(buf, HTTP_HEADER_200_1_1))
+		{
+			cache->extractInfo(buf, nbytes);
+			cache->eraseChunks();			
+		}
+		cache->isCondGet = false;
+	}
 	cache->addChunk(buf, nbytes);
 }
 
-bool createHttpConditionalGetPacket(Cache* cache, char* buf)
+bool createHttpConditionalGetPacket(Cache* cache, char* buf, int& nbytes)
 {
 	char* end = strstr(buf, "\r\n\r\n");
 
 	if (!end || !cache->expires || !strlen(cache->etag)) return false;
 	end += 2; // Move pointer to end of first\r\n
 
-	sprintf(end, "%s%s\r\n%s%s\r\n\r\n", 
-			HTTP_HEADER_IF_MODIFIED_SINCE, cache->expiresStr,
-			HTTP_HEADER_IF_NONE_MATCH, cache->etag);
+	nbytes += sprintf(end, "%s%s\r\n%s%s\r\n\r\n", 
+						   HTTP_HEADER_IF_MODIFIED_SINCE, cache->expiresStr,
+						   HTTP_HEADER_IF_NONE_MATCH, cache->etag);
 	
+	nbytes -= 2;
 	// cout << "Conditional GET:" << buf << "<<END-OF-PACKET>>" << endl;
+	return true;
 }
 
 int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
@@ -267,7 +285,7 @@ int handleRecvRequest(int fd, const int listener, fd_set& master, int& fdmax)
 					cout << "Cache Expired for " << client->path << endl;
 
 					// Send a conditional GET
-					isCondGet = createHttpConditionalGetPacket(cache, buf);
+					isCondGet = createHttpConditionalGetPacket(cache, buf, nbytes);
 
 					if(!isCondGet)
 					{

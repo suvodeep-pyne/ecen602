@@ -2,7 +2,6 @@
 
 #include "lru.h"
 
-
 using namespace std;
 
 bool parseHeader(const char* header, char* buf, char* output)
@@ -21,12 +20,8 @@ bool parseHeader(const char* header, char* buf, char* output)
 
 bool parseEtag(char* buf, char* output)
 {
-	memset(output, 0, MAX_ETAG_LENGTH);
-
-	if(!parseHeader(HTTP_HEADER_ETAG, buf, output))
-		return false;
-	
-	return true;
+	return parseHeader(HTTP_HEADER_ETAG_1, buf, output) ||
+		   parseHeader(HTTP_HEADER_ETAG_2, buf, output);
 }
 
 bool LRU::add(Cache* cache)
@@ -95,6 +90,15 @@ void LRU::print()
 	cout << endl;
 }
 
+Cache::Cache(string url) : url(url)
+{
+	memset(expiresStr, 0, MAX_EXPIRES_LENGTH);
+	memset(etag, 0, MAX_ETAG_LENGTH);
+	lastModified = 0;
+	expires = 0;
+	isCondGet = false;
+}
+
 void Cache::addChunk(char* buf, int nbytes)
 {
 	Chunk *chunk = new Chunk;
@@ -121,11 +125,12 @@ time_t parseTime(const char* header, char* buf)
 
 void Cache::extractInfo(char* buf, const int nbytes)
 {
-	expires = parseTime("Expires:", buf);
-	lastModified = parseTime("Last-Modified:", buf);
+	time_t t;
+	if (t = parseTime("Expires:", buf))
+		expires = t;
+	if (t = parseTime("Last-Modified:", buf))
+		lastModified = t;
 	parseEtag(buf, etag);
-
-	memset(expiresStr, 0, MAX_EXPIRES_LENGTH);
 	parseHeader("Expires:", buf, this->expiresStr);
 
 	// Print out the times to check whether parsed correctly
@@ -133,14 +138,18 @@ void Cache::extractInfo(char* buf, const int nbytes)
 	cout << "Etag: " << etag << endl;
 	// cout << "Last Modified Time: " << lastModified << endl;
 	// cout << "Current Time: " << time(NULL) << endl;
-
 }
 
-Cache::~Cache()
+void Cache::eraseChunks()
 {
 	for (vector<Chunk*>::iterator ii = chunks.begin();
 			ii != chunks.end(); ii++)
 	{
 		delete *ii;
 	}
+}
+
+Cache::~Cache()
+{
+	eraseChunks();
 }

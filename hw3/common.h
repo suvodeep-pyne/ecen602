@@ -29,12 +29,17 @@
 #define HTTP_HOST_HEADER 		"Host: "
 #define HTTP_PORT 				"80"
 
-#define MAX_ETAG_LENGTH 		32
+#define MAX_ETAG_LENGTH 		255
 #define MAX_EXPIRES_LENGTH		255
 
-#define HTTP_HEADER_ETAG 		"Etag: "
-#define HTTP_HEADER_IF_MODIFIED_SINCE "If-Modified-Since: "
-#define HTTP_HEADER_IF_NONE_MATCH "If-None-Match: "
+#define HTTP_HEADER_ETAG_1 				"Etag: "
+#define HTTP_HEADER_ETAG_2 				"ETag: "
+#define HTTP_HEADER_IF_MODIFIED_SINCE 	"If-Modified-Since: "
+#define HTTP_HEADER_IF_NONE_MATCH 		"If-None-Match: "
+#define HTTP_HEADER_304_1_0				"HTTP/1.0 304 Not Modified"
+#define HTTP_HEADER_304_1_1				"HTTP/1.1 304 Not Modified"
+#define HTTP_HEADER_200_1_0				"HTTP/1.0 200 OK"
+#define HTTP_HEADER_200_1_1				"HTTP/1.1 200 OK"
 
 using namespace std;
 
