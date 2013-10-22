@@ -191,6 +191,10 @@ void updateCache(Client* client, char* buf, int nbytes)
 
 		lru.add(cache);
 	}
+	if (!cache)
+	{
+		return;
+	}
 	// Check if this is a conditional GET return packet
 	else if(cache->isCondGet)
 	{
