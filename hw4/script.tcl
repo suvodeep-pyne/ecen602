@@ -47,8 +47,6 @@ set src2 [$ns node]
 set rcv1 [$ns node]
 set rcv2 [$ns node]
 
-$R1 label "R1"
-
 # Initialize variables
 set sum1 0
 set sum2 0
