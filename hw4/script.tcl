@@ -53,11 +53,11 @@ set sum2 0
 set ratio 0
 
 # Connect the nodes
-$ns duplex-link $R1   $R2  1Mb    5ms DropTail
-$ns duplex-link $src1 $R1 10Mb    0ms DropTail
-$ns duplex-link $src2 $R1 10Mb 3.75ms DropTail
-$ns duplex-link $rcv1 $R2 10Mb    0ms DropTail
-$ns duplex-link $rcv2 $R2 10Mb 3.75ms DropTail
+$ns duplex-link $R1   $R2  1Mb     5ms DropTail
+$ns duplex-link $src1 $R1 10Mb     0ms DropTail
+$ns duplex-link $src2 $R1 10Mb  3.75ms DropTail
+$ns duplex-link $rcv1 $R2 10Mb     0ms DropTail
+$ns duplex-link $rcv2 $R2 10Mb  3.75ms DropTail
 
 set tcp1 [new Agent/TCP/Vegas]
 $ns attach-agent $src1 $tcp1
