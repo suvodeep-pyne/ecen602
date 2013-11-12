@@ -128,3 +128,5 @@ $ns at 181.0 "$ftp1 stop"
 $ns at 181.0 "$ftp2 stop"
 $ns at 181.0 "$cbr stop"
 $ns at 182.0 "finish"
+
+$ns run
